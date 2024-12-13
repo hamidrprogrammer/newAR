@@ -8,7 +8,7 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: io.codemagic.sample.iosnative
+        bundle_identifier: com.hamid.arkit.new
       vars:
         BUNDLE_ID: "com.hamid.arkit.new"
         XCODE_WORKSPACE: "Tracked Images.xcworkspace" # <-- Put the name of your Xcode workspace here
