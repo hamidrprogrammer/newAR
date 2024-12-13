@@ -1,44 +1,71 @@
 workflows:
-  ios:
-    name: iOS CI/CD Workflow
-    max_build_duration: 60 # Set a timeout for your build process (in minutes)
-    environment:
-      xcode: 14.3 # Specify the version of Xcode you are using
-      cocoapods: true # Ensure CocoaPods is available in the environment (if you're using it)
-
-    scripts:
-      - name: Install dependencies
-        script: |
-          # Install CocoaPods dependencies (if needed)
-          gem install cocoapods
-          pod install --repo-update
-          
-      - name: Build iOS app
-        script: |
-          # Clean any previous builds and perform a new build using xcodebuild
-          xcodebuild clean -workspace YourWorkspace.xcworkspace -scheme YourScheme -configuration Release -sdk iphoneos
-          xcodebuild archive -workspace YourWorkspace.xcworkspace -scheme YourScheme -configuration Release -sdk iphoneos -archivePath $CM_BUILD_DIR/YourApp.xcarchive
-          
-      - name: Export IPA
-        script: |
-          # Export the IPA file from the archive
-          xcodebuild -exportArchive -archivePath $CM_BUILD_DIR/YourApp.xcarchive -exportOptionsPlist exportOptions.plist -exportPath $CM_BUILD_DIR/YourApp.ipa
-
-    artifacts:
-      - $CM_BUILD_DIR/YourApp.ipa # Define the .ipa file as an artifact for download
-
-    publishing:
-      testflight:
-        api_key: $TESTFLIGHT_API_KEY # Your TestFlight API Key (configured as an environment variable)
-        ipa_path: $CM_BUILD_DIR/YourApp.ipa
-        app_identifier: "com.yourcompany.yourapp" # Your app's unique identifier
-        team_id: $TEAM_ID # Your Apple Developer team ID
-        username: $APPLE_DEV_USERNAME # Your Apple Developer account username
-        password: $APPLE_DEV_PASSWORD # Your Apple Developer account password (Use app-specific password if available)
-
-    # Optional: Add a post-processing step if needed
-    post_process:
-      - name: Clean up after build
-        script: |
-          # Optionally, delete temporary files or caches after the build
-          rm -rf $CM_BUILD_DIR/YourApp.xcarchive
+    ios-workflow:
+      name: iOS Workflow
+      environment:
+        groups:
+        # Add the group environment variables in Codemagic UI (either in Application/Team variables) - https://docs.codemagic.io/variables/environment-variable-groups/
+          - ios   # <-- (APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY)
+         
+        vars:
+          APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_IDENTIFIER
+          APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+          APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
+          XCODE_WORKSPACE: "Tracked Images.xcworkspace" # <-- Put the name of your workspace here.
+          XCODE_SCHEME: "swiftly" # <-- Put the name of your scheme here.
+          BUNDLE_ID: "com.hamid.arkit.new" # <-- Put your Bundle Id here.
+          APP_STORE_APPLE_ID: 6738909278 # <-- Put the app id number here. This is found in App Store Connect > App > General > App Information
+        xcode: latest # <-- set to specific version e.g. 14.3, 15.0 to avoid unexpected updates.
+        cocoapods: default
+      triggering:
+        events:
+          - push
+          - tag
+          - pull_request
+        branch_patterns:
+          - pattern: 'develop'
+            include: true
+            source: true
+      scripts:
+        - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
+          script: |
+            keychain initialize
+        - name: Fetch signing files
+          script: |
+            app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
+        - name: Use system default keychain
+          script: |
+            keychain add-certificates
+        - name: Set up code signing settings on Xcode project
+          script: |
+            xcode-project use-profiles
+        - name: Increment build number
+          script: |
+            # agvtool new-version -all $(($BUILD_NUMBER + 1))
+            agvtool new-version -all $(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID") + 1))
+        - name: Build ipa for distribution
+          script: |
+            xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+      artifacts:
+        - build/ios/ipa/*.ipa
+        - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      publishing:
+        app_store_connect:   # https://docs.codemagic.io/publishing-yaml/distribution              
+            api_key: $APP_STORE_CONNECT_PRIVATE_KEY         # Contents of the API key, can also reference environment variable such as $APP_STORE_CONNECT_PRIVATE_KEY
+            key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER      # Alphanumeric value that identifies the API key, can also reference environment variable such as $APP_STORE_CONNECT_KEY_IDENTIFIER
+            issuer_id: $APP_STORE_CONNECT_ISSUER_ID      # Alphanumeric value that identifies who created the API key, can also reference environment variable such as $APP_STORE_CONNECT_ISSUER_ID
+            submit_to_testflight: true                     # Optional boolean, defaults to false. Whether or not to submit the uploaded build to TestFlight beta review. Required for distributing to beta groups. Note: This action is performed during post-processing.
+            # beta_groups:                                  # Specify the names of beta tester groups that will get access to the build once it has passed beta review. 
+            #       - group name 1
+            #       - group name 2
+        email:
+            recipients:
+              - hamidrdeveloper@gmail.com
+            notify:
+              success: true
+              failure: true
+        slack:
+            channel: '#builds'
+            notify_on_build_start: true    # To receive a notification when a build starts
+            notify:
+              success: false               # To not receive a notification when a build succeeds
+              failure: false               # To not receive a notification when a build fails
