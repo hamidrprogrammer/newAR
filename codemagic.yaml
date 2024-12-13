@@ -14,9 +14,7 @@ workflows:
           - certificate_credentials # <-- (CERTIFICATE_PRIVATE_KEY - Put your Certificate Private Key here)
           - other
         vars:
-          APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_IDENTIFIER
-          APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-          APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
+         
           XCODE_WORKSPACE: "Tracked Images.xcworkspace" # <-- Put the name of your workspace here.
           XCODE_SCHEME: "swiftly" # <-- Put the name of your scheme here.
           BUNDLE_ID: "com.hamid.arkit.new" # <-- Put your Bundle Id here.
