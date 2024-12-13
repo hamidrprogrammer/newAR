@@ -50,12 +50,12 @@ workflows:
         - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
       publishing:
         app_store_connect:   # https://docs.codemagic.io/publishing-yaml/distribution              
-            api_key: Encrypted(-----BEGIN PRIVATE KEY-----
+            api_key: -----BEGIN PRIVATE KEY-----
 MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgxZ/UR0SmAYcFLlnG
 gnmzooDNqVnXhW490IU18PVtHTegCgYIKoZIzj0DAQehRANCAASagrM5aeCTNcda
 hLhHzLY36JacGaHSCi/5RQqeJ52NI0ejoOC73jNnhn76VdoFm2cjFNZ0B0L7hjgx
 1R1MRy2n
------END PRIVATE KEY-----)         # Contents of the API key, can also reference environment variable such as $APP_STORE_CONNECT_PRIVATE_KEY
+-----END PRIVATE KEY-----        # Contents of the API key, can also reference environment variable such as $APP_STORE_CONNECT_PRIVATE_KEY
             key_id: $TESTFLIGHT_API_KEY_ID      # Alphanumeric value that identifies the API key, can also reference environment variable such as $APP_STORE_CONNECT_KEY_IDENTIFIER
             issuer_id: $ISSUER_ID      # Alphanumeric value that identifies who created the API key, can also reference environment variable such as $APP_STORE_CONNECT_ISSUER_ID
             submit_to_testflight: true                     # Optional boolean, defaults to false. Whether or not to submit the uploaded build to TestFlight beta review. Required for distributing to beta groups. Note: This action is performed during post-processing.
