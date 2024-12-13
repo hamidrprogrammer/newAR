@@ -7,6 +7,7 @@ workflows:
           - ios   # <-- (APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY)
          
         vars:
+          APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_IDENTIFIER
           APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
           XCODE_WORKSPACE: "Tracked Images.xcworkspace" # <-- Put the name of your workspace here.
           XCODE_SCHEME: "swiftly" # <-- Put the name of your scheme here.
